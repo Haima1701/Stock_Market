@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Stock Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav {
+      margin-bottom: 2rem;
+    }
+    nav button {
+      padding: 0.7rem 1.2rem;
+      margin: 0.5rem;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background: #0056b3;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    canvas {
+      max-width: 700px;
+      margin: 2rem auto;
+    }
+    .card {
+      display: inline-block;
+      background: white;
+      padding: 1rem;
+      margin: 0.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 220px;
+    }
+    .chatbox {
+      max-width: 600px;
+      margin: 2rem auto;
+      text-align: left;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .chat-messages {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+    .msg {
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      border-radius: 6px;
+    }
+    .user { background: #d1e7dd; }
+    .bot { background: #f8d7da; }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Smart Stock Dashboard</h1>
+
+  <!-- Navigation -->
+  <nav>
+    <button onclick="showPage('home')">🏠 Home</button>
+    <button onclick="showPage('analysis')">📈 Analysis</button>
+  </nav>
+
+  <!-- Homepage -->
+  <section id="home" class="active">
+    <h2>Today's Stock Snapshot</h2>
+    <canvas id="todayChart"></canvas>
+    <div id="cards"></div>
+
+    <!-- Chatbot at bottom of homepage -->
+    <h2>🤖 Investment Chatbot</h2>
+    <div class="chatbox">
+      <div class="chat-messages" id="chatMessages"></div>
+      <input type="text" id="chatInput" placeholder="Ask about a company..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </section>
+
+  <!-- Analysis Page -->
+  <section id="analysis">
+    <h2>Stock Analysis (Jan–Sep 2025)</h2>
+    <input type="text" id="symbol" placeholder="Enter Company (e.g., RELIANCE)" />
+    <button onclick="loadStock()">Analyze</button>
+    <div id="info"></div>
+    <canvas id="stockChart"></canvas>
+    <div id="analysisResult"></div>
+  </section>
+
+  <script>
+    // Navigation
+    function showPage(pageId) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(pageId).classList.add("active");
+    }
+
+    // ========== HOMEPAGE ==========
+    const todayData = [
+      { company: "Reliance Industries", symbol: "RELIANCE", price: 1405.00, change: -10.00, percent: -0.71 },
+      { company: "State Bank of India", symbol: "SBI", price: 861.95, change: 7.60, percent: 0.89 },
+      { company: "LIC", symbol: "LIC", price: 893.20, change: 3.80, percent: 0.43 },
+      { company: "TCS", symbol: "TCS", price: 3161.40, change: -15.30, percent: -0.48 },
+      { company: "Maruti Suzuki", symbol: "MARUTI", price: 15845.00, change: 28.00, percent: 0.18 }
+    ];
+
+    // Bar Chart
+    new Chart(document.getElementById("todayChart"), {
+      type: "bar",
+      data: {
+        labels: todayData.map(d => d.symbol),
+        datasets: [{
+          label: "Current Price (₹)",
+          data: todayData.map(d => d.price),
+          backgroundColor: ["#007bff", "#28a745", "#ffc107", "#17a2b8", "#6f42c1"]
+        }]
+      },
+      options: { responsive: true }
+    });
+
+    // Cards
+    const cardsDiv = document.getElementById("cards");
+    todayData.forEach(d => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h3>${d.company}</h3>
+        <p><b>Symbol:</b> ${d.symbol}</p>
+        <p><b>Price:</b> ₹${d.price}</p>
+        <p><b>Change:</b> ${d.change} (${d.percent}%)</p>
+      `;
+      cardsDiv.appendChild(card);
+    });
+
+    // ========== ANALYSIS PAGE ==========
+    const stockData2025 = {
+      "RELIANCE": { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"], prices: [1265.10,1200.09,1275.09,1405.00,1420.90,1500.60,1390.20,1357.20,1399.30] },
+      "SBI": { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"], prices: [765.00,790.00,815.00,835.00,850.00,813.65,831.70,827.65,824.75] },
+      "LIC": { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"], prices: [845.45,740.50,799.40,795.75,954.45,972.80,895.00,852.15,885.35] },
+      "TCS": { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"], prices: [4112.39,3483.25,3606.15,3453.70,3463.40,3462.00,3036.80,3084.70,3111.90] },
+      "MARUTI": { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"], prices: [12310.65,11945.85,11522.15,12257.00,12319.00,12400.00,12608.00,14791.00,15325.00] }
+    };
+
+    let stockChart;
+    function loadStock() {
+      const symbol = document.getElementById("symbol").value.toUpperCase();
+      const data = stockData2025[symbol];
+      if (!data) {
+        document.getElementById("info").innerText = "❌ Symbol not found.";
+        document.getElementById("analysisResult").innerText = "";
+        return;
+      }
+
+      document.getElementById("info").innerHTML = `<h3>${symbol} - Jan to Sep 2025</h3>`;
+
+      const ctx = document.getElementById("stockChart").getContext("2d");
+      if (stockChart) stockChart.destroy();
+      stockChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: `${symbol} Price`,
+            data: data.prices,
+            borderColor: "blue",
+            fill: false
+          }]
+        }
+      });
+
+      const start = data.prices[0];
+      const end = data.prices[data.prices.length - 1];
+      const change = end - start;
+      const percent = ((change / start) * 100).toFixed(2);
+      const verdict = change > 0 ? "Profit" : "Loss";
+
+      document.getElementById("analysisResult").innerText =
+        `${symbol} shows a ${verdict} of ₹${change.toFixed(2)} (${percent}%) from Jan to Sep 2025.`;
+    }
+
+    // ========== CHATBOT ==========
+    const chatMessages = document.getElementById("chatMessages");
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      addMessage("user", msg);
+      input.value = "";
+
+      const symbol = msg.toUpperCase();
+      if (stockData2025[symbol]) {
+        const prices = stockData2025[symbol].prices;
+        const start = prices[0], end = prices[prices.length-1];
+        const change = end - start;
+        const percent = ((change / start) * 100).toFixed(2);
+        const verdict = change > 0 ? "Profit" : "Loss";
+        addMessage("bot", `📊 ${symbol} from Jan to Sep 2025:\n- Start: ₹${start}\n- End: ₹${end}\n- Change: ₹${change.toFixed(2)} (${percent}%)\n- Verdict: ${verdict}`);
+      } else if (symbol === "EXIT") {
+        addMessage("bot", "👋 Goodbye! Happy investing.");
+      } else {
+        addMessage("bot", "❌ I don't have data for that. Try RELIANCE, SBI, LIC, TCS, or MARUTI.");
+      }
+    }
+
+    function addMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + (sender === "user" ? "user" : "bot");
+      div.innerText = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  </script>
+</body>
+</html>
